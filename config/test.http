@@ -1,0 +1,18 @@
+### Create a todo
+POST http://localhost:8000/api/todos/
+Content-Type: application/json
+
+{
+  "title": "study well",
+  "description": "lock in pls",
+  "priority": "low"
+}
+
+### List all todos
+GET http://localhost:8000/api/todos/
+
+### Toggle completed
+PATCH http://localhost:8000/api/todos/1/toggle/
+
+### Delete
+DELETE http://localhost:8000/api/todos/2/
