@@ -1,0 +1,297 @@
+{% extends 'todos/base.html' %}
+
+{% block title %}My Todos{% endblock %}
+
+{% block extra_styles %}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.page-header h1 { font-size: 1.6rem; font-weight: 800; }
+.page-header span { color: var(--muted); font-size: 0.85rem; }
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.form-card h2 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row .full { grid-column: 1 / -1; }
+
+.field label { display: block; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field select option { background: var(--surface); }
+
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.82rem;
+  transition: all 0.18s;
+}
+
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #d4eb2e; }
+.btn-sm { padding: 5px 12px; font-size: 0.72rem; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-success { background: transparent; color: var(--success); border: 1px solid var(--success); }
+.btn-success:hover { background: var(--success); color: #000; }
+.btn-warning { background: transparent; color: #f0a500; border: 1px solid #f0a500; }
+.btn-warning:hover { background: #f0a500; color: #000; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+.todo-list { display: flex; flex-direction: column; gap: 12px; }
+
+.todo-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.todo-card:hover { border-color: #3a3a45; }
+.todo-card.completed .todo-title { text-decoration: line-through; opacity: 0.5; }
+
+.todo-main {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.todo-info { flex: 1; }
+.todo-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+.todo-desc { font-size: 0.78rem; color: var(--muted); }
+
+.todo-meta { display: flex; align-items: center; gap: 8px; }
+
+.badge {
+  font-size: 0.68rem;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+.badge-high { background: rgba(255,77,109,0.15); color: var(--danger); }
+.badge-medium { background: rgba(232,255,71,0.12); color: var(--accent); }
+.badge-low { background: rgba(107,107,122,0.2); color: var(--muted); }
+
+.todo-actions { display: flex; gap: 6px; }
+
+/* Edit form inside card */
+.edit-form {
+  display: none;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  animation: slideDown 0.2s ease;
+}
+
+.edit-form.open { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.edit-grid .full { grid-column: 1 / -1; }
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--muted);
+}
+
+.empty .icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty p { font-size: 0.85rem; }
+
+.filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>My Todos</h1>
+  <span>{{ todos|length }} item{{ todos|length|pluralize }}</span>
+</div>
+
+<!-- Add Todo Form -->
+<div class="form-card">
+  <h2>Add New Todo</h2>
+  <form method="POST" action="{% url 'web_todo_create' %}">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="field full">
+        <label>Title *</label>
+        <input type="text" name="title" placeholder="What needs to be done?" required />
+      </div>
+      <div class="field full">
+        <label>Description</label>
+        <textarea name="description" rows="2" placeholder="Optional details..."></textarea>
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select name="priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Add Todo</button>
+    </div>
+  </form>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <a href="{% url 'web_todos' %}" class="filter-btn {% if not request.GET.filter %}active{% endif %}">All</a>
+  <a href="{% url 'web_todos' %}?filter=active" class="filter-btn {% if request.GET.filter == 'active' %}active{% endif %}">Active</a>
+  <a href="{% url 'web_todos' %}?filter=completed" class="filter-btn {% if request.GET.filter == 'completed' %}active{% endif %}">Completed</a>
+  <a href="{% url 'web_todos' %}?filter=high" class="filter-btn {% if request.GET.filter == 'high' %}active{% endif %}">High Priority</a>
+</div>
+
+<!-- Todo List -->
+<div class="todo-list">
+  {% if todos %}
+    {% for todo in todos %}
+    <div class="todo-card {% if todo.completed %}completed{% endif %}" id="card-{{ todo.pk }}">
+
+      <!-- Main row -->
+      <div class="todo-main">
+        <div class="todo-info">
+          <div class="todo-title">{{ todo.title }}</div>
+          {% if todo.description %}
+            <div class="todo-desc">{{ todo.description }}</div>
+          {% endif %}
+        </div>
+        <div class="todo-meta">
+          <span class="badge badge-{{ todo.priority }}">{{ todo.priority }}</span>
+        </div>
+        <div class="todo-actions">
+          <!-- Toggle -->
+          <form method="POST" action="{% url 'web_todo_toggle' todo.pk %}">
+            {% csrf_token %}
+            {% if todo.completed %}
+              <button type="submit" class="btn btn-ghost btn-sm">Undo</button>
+            {% else %}
+              <button type="submit" class="btn btn-success btn-sm">Done</button>
+            {% endif %}
+          </form>
+          <!-- Edit button -->
+          <button
+            class="btn btn-warning btn-sm"
+            onclick="toggleEdit({{ todo.pk }}, '{{ todo.title|escapejs }}', '{{ todo.description|escapejs }}', '{{ todo.priority }}')">
+            Edit
+          </button>
+          <!-- Delete -->
+          <form method="POST" action="{% url 'web_todo_delete' todo.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this todo?')">Del</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit form (hidden by default) -->
+      <div class="edit-form" id="edit-{{ todo.pk }}">
+        <form method="POST" action="{% url 'web_todo_edit' todo.pk %}">
+          {% csrf_token %}
+          <div class="edit-grid">
+            <div class="field full">
+              <label>Title *</label>
+              <input type="text" name="title" id="edit-title-{{ todo.pk }}" required />
+            </div>
+            <div class="field full">
+              <label>Description</label>
+              <textarea name="description" id="edit-desc-{{ todo.pk }}" rows="2"></textarea>
+            </div>
+            <div class="field">
+              <label>Priority</label>
+              <select name="priority" id="edit-priority-{{ todo.pk }}">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-ghost" onclick="closeEdit({{ todo.pk }})">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">
+      <div class="icon">📋</div>
+      <p>No todos yet. Add one above!</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  function toggleEdit(pk, title, description, priority) {
+    const form = document.getElementById('edit-' + pk);
+    const isOpen = form.classList.contains('open');
+
+    // Close all open edit forms first
+    document.querySelectorAll('.edit-form.open').forEach(f => f.classList.remove('open'));
+
+    if (!isOpen) {
+      // Fill in the current values
+      document.getElementById('edit-title-' + pk).value = title;
+      document.getElementById('edit-desc-' + pk).value = description;
+      document.getElementById('edit-priority-' + pk).value = priority;
+      form.classList.add('open');
+    }
+  }
+
+  function closeEdit(pk) {
+    document.getElementById('edit-' + pk).classList.remove('open');
+  }
+</script>
+{% endblock %}

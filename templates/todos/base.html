@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}TodoApp{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --border: #2a2a30;
+      --accent: #e8ff47;
+      --text: #f0f0f0;
+      --muted: #6b6b7a;
+      --danger: #ff4d6d;
+      --success: #43d98a;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.03em;
+    }
+    .logo span { color: var(--accent); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .nav-right a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    main { max-width: 800px; margin: 40px auto; padding: 0 24px; }
+
+    .messages { margin-bottom: 20px; }
+    .message {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+    .message.error { background: rgba(255,77,109,0.15); color: var(--danger); border: 1px solid var(--danger); }
+    .message.success { background: rgba(67,217,138,0.15); color: var(--success); border: 1px solid var(--success); }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Todo<span>App</span></div>
+    <div class="nav-right">
+      {% if user.is_authenticated %}
+        <span>👋 {{ user.username }}</span>
+        <a href="{% url 'web_logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'web_login' %}">Login</a>
+        <a href="{% url 'web_register' %}">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main>
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

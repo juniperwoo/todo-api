@@ -3,16 +3,16 @@ POST http://localhost:8000/api/todos/
 Content-Type: application/json
 
 {
-  "title": "study well",
-  "description": "lock in pls",
-  "priority": "low"
+  "title": "study jwt authentiction",
+  "description": "athentication, authorization",
+  "priority": "high"
 }
 
 ### List all todos
 GET http://localhost:8000/api/todos/
 
 ### Toggle completed
-PATCH http://localhost:8000/api/todos/1/toggle/
+PATCH http://localhost:8000/api/todos/5/toggle/
 
 ### Delete
-DELETE http://localhost:8000/api/todos/2/
+DELETE http://localhost:8000/api/todos/4/
