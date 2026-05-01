@@ -11,7 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Todo
 from .serializers import TodoSerializer, RegisterSerializer, UserSerializer
-
+from django.db import connection #for writing raw sql
+from rest_framework.views import APIView 
+from django.contrib.auth.hashers import make_password 
 
 #API Auth Views
 
@@ -239,3 +241,81 @@ def web_todo_edit(request, pk):
         else:
             messages.error(request, 'Title is required.')
     return redirect('web_todos')
+
+#register new users
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = request.data
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO auth_user 
+                    (username, email, password, is_active, is_staff, is_superuser, date_joined, first_name, last_name)
+                VALUES 
+                    (%s, %s, %s, TRUE, FALSE, FALSE, NOW(), '', '')
+                RETURNING id, username, email
+                """,
+                [data.get('username'), data.get('email'), make_password(data.get('password'))]
+            )
+            row = cursor.fetchone()
+            columns = [col[0] for col in cursor.description]
+
+        user_data = dict(zip(columns, row))
+
+        user = User.objects.get(id=user_data['id'])
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'user': user_data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        }, status=status.HTTP_201_CREATED)
+
+#handles the login
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            return Response(
+                {'error': 'Please provide username and password.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, username, email FROM auth_user WHERE username = %s",
+                [username]
+            )
+            row = cursor.fetchone()
+            columns = [col[0] for col in cursor.description]
+
+        if not row:
+            return Response(
+                {'error': 'Invalid credentials.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        user_data = dict(zip(columns, row))
+
+        # authenticate needed to verify pw as raw sql cant verify hasged pw
+        user = authenticate(username=username, password=password)
+        if not user:
+            return Response(
+                {'error': 'Invalid credentials.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': user_data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+    
+      #no need for raw query to handle logout as logout is handles by jwt by blacklisting the refresh token.
