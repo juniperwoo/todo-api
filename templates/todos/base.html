@@ -75,13 +75,13 @@
   <nav>
     <div class="logo">Todo<span>App</span></div>
     <div class="nav-right">
-      {% if user.is_authenticated %}
-        <span>👋 {{ user.username }}</span>
-        <a href="{% url 'web_logout' %}">Logout</a>
-      {% else %}
-        <a href="{% url 'web_login' %}">Login</a>
-        <a href="{% url 'web_register' %}">Register</a>
-      {% endif %}
+      {% if jwt_user %}
+  <span>👋 {{ jwt_user.username }}</span>
+  <a href="{% url 'web_logout' %}">Logout</a>
+{% else %}
+  <a href="{% url 'web_login' %}">Login</a>
+  <a href="{% url 'web_register' %}">Register</a>
+{% endif %}
     </div>
   </nav>
 

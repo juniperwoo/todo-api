@@ -62,7 +62,27 @@
   color: var(--muted);
 }
 
+
 .auth-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.password-hints {
+  list-style: none;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(232,255,71,0.05);
+  border: 1px solid rgba(232,255,71,0.15);
+  border-radius: 8px;
+}
+
+.password-hints li {
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 2px 0;
+}
+
+.password-hints li::before {
+  content: '✓ ';
+  color: var(--accent);
+}
 {% endblock %}
 
 {% block content %}
@@ -82,7 +102,14 @@
     </div>
     <div class="field">
       <label>Password</label>
-      <input type="password" name="password" placeholder="At least 6 characters" required />
+      <input type="password" name="password" placeholder="At least 8 characters" required />
+      <ul class="password-hints">
+    <li>At least 8 characters</li>
+    <li>One uppercase letter (A-Z)</li>
+    <li>One lowercase letter (a-z)</li>
+    <li>One number (0-9)</li>
+    <li>One special character (!@#$%^&*)</li>
+  </ul>
     </div>
     <div class="field">
       <label>Confirm Password</label>

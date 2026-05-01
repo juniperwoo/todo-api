@@ -8,16 +8,22 @@ class Todo(models.Model):
         MEDIUM = 'medium', 'Medium'
         HIGH   = 'high',   'High'
 
-    user        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos', default=1)
+    #yo user=1 wala
+    user        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
     title       = models.CharField(max_length=255)
     description = models.TextField(blank=True) #users can leave it empty
     completed   = models.BooleanField(default=False)
-    priority    = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM) #
+    #no need for max length here
+    priority    = models.CharField(choices=Priority.choices, default=Priority.MEDIUM) #
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
 
     class Meta: #sets default order of todo as newest task first
         ordering = ['-created_at']
 
+    
+    #def __str__(self):
+       # return f"{self.user.username} - {self.title}" this was making django to go to db and fetch full user obj and also expose username
+
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+     return f"Todo({self.id}) - {self.title} [user:{self.user_id}]"
