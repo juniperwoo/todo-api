@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'todos',
 ]
 
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -98,3 +99,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/todos/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+AUTH_USER_MODEL = 'accounts.User'

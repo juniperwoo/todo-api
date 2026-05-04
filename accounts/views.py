@@ -1,53 +1,53 @@
-import re
+import re #used for password validation 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response #used to send response to client
+from rest_framework_simplejwt.tokens import RefreshToken #generates access and refresh token
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings as django_settings
 from .serializers import RegisterSerializer, UserSerializer
-
+from .models import User
 
 # Helpers
 
-def set_jwt_cookies(response, access_token, refresh_token):
+def set_jwt_cookies(response, access_token, refresh_token): #stores 2 tokens in browser cookies for protection and expiry mgmt
     response.set_cookie(
         django_settings.JWT_ACCESS_COOKIE,
         str(access_token),
-        max_age=60 * 30,
+        max_age=60 * 30, 
         httponly=True,
-        samesite='Lax',
+        samesite='Lax', #prevents CSRF attacks by not sending cookies on cross-site requests, but allows them on same-site requests.
     )
     response.set_cookie(
         django_settings.JWT_REFRESH_COOKIE,
         str(refresh_token),
-        max_age=60 * 60 * 24 * 7,
+        max_age=60 * 60 * 24 * 7, 
         httponly=True,
         samesite='Lax',
     )
     return response
 
 
-def get_user_from_cookie(request):
+def get_user_from_cookie(request): #extracts access token from cookie, decodes it to get user id, and retrieves user from database. 
     from rest_framework_simplejwt.tokens import AccessToken
+    from accounts.models import User
     token = request.COOKIES.get(django_settings.JWT_ACCESS_COOKIE)
     if not token:
         return None
-    try:
+    try: 
         decoded = AccessToken(token)
         user_id = decoded['user_id']
-        return User.objects.get(id=user_id)
+        return User.objects.get(id=user_id) 
     except Exception:
-        return None
+        return None 
 
 
-def jwt_required(view_func):
+def jwt_required(view_func): 
     def wrapper(request, *args, **kwargs):
-        user = get_user_from_cookie(request)
+        user = get_user_from_cookie(request) 
         if not user:
             return redirect('web_login')
         request.jwt_user = user
@@ -63,7 +63,7 @@ def jwt_required(view_func):
 def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
+        user = serializer.save() 
         refresh = RefreshToken.for_user(user)
         return Response({
             'user':    UserSerializer(user).data,
@@ -103,7 +103,7 @@ def logout(request):
         return Response({'error': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(['GET']) 
 @permission_classes([IsAuthenticated])
 def profile(request):
     return Response(UserSerializer(request.user).data)
@@ -162,6 +162,8 @@ def web_register(request):
             messages.error(request, 'Password must contain at least one special character.')
         elif User.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken.')
+        elif User.objects.filter(email=email).exists():
+            messages.error(request, 'email already registered.')    
         else:
             user     = User.objects.create_user(username=username, email=email, password=password)
             refresh  = RefreshToken.for_user(user)

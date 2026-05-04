@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Todo(models.Model):
@@ -9,11 +9,10 @@ class Todo(models.Model):
         HIGH   = 'high',   'High'
 
     #yo user=1 wala
-    user        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
+    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='todos')
     title       = models.CharField(max_length=255)
     description = models.TextField(blank=True) #users can leave it empty
     completed   = models.BooleanField(default=False)
-    #no need for max length here
     priority    = models.CharField(choices=Priority.choices, default=Priority.MEDIUM) #
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
@@ -27,3 +26,6 @@ class Todo(models.Model):
 
     def __str__(self):
      return f"Todo({self.id}) - {self.title} [user:{self.user_id}]"
+    
+
+   

@@ -19,7 +19,9 @@ services:
     build: .
     container_name: todo_web
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py makemigrations accounts &&
+             python manage.py makemigrations todos &&
+             python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
