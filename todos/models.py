@@ -18,6 +18,7 @@ class Todo(models.Model):
     updated_at  = models.DateTimeField(auto_now=True)
 
     class Meta: #sets default order of todo as newest task first
+        db_table= '"pitech"."todo"'      
         ordering = ['-created_at']
 
     

@@ -159,7 +159,7 @@
 <!-- Add Todo Form -->
 <div class="form-card">
   <h2>Add New Todo</h2>
-  <form method="POST" action="{% url 'web_todo_create' %}">
+  <form method="POST" action="{% url 'todos:create' %}">
     {% csrf_token %}
     <div class="form-row">
       <div class="field full">
@@ -187,10 +187,10 @@
 
 <!-- Filters -->
 <div class="filters">
-  <a href="{% url 'web_todos' %}" class="filter-btn {% if not request.GET.filter %}active{% endif %}">All</a>
-  <a href="{% url 'web_todos' %}?filter=active" class="filter-btn {% if request.GET.filter == 'active' %}active{% endif %}">Active</a>
-  <a href="{% url 'web_todos' %}?filter=completed" class="filter-btn {% if request.GET.filter == 'completed' %}active{% endif %}">Completed</a>
-  <a href="{% url 'web_todos' %}?filter=high" class="filter-btn {% if request.GET.filter == 'high' %}active{% endif %}">High Priority</a>
+  <a href="{% url 'todos:list' %}" class="filter-btn {% if not request.GET.filter %}active{% endif %}">All</a>
+  <a href="{% url 'todos:list' %}?filter=active" class="filter-btn {% if request.GET.filter == 'active' %}active{% endif %}">Active</a>
+  <a href="{% url 'todos:list' %}?filter=completed" class="filter-btn {% if request.GET.filter == 'completed' %}active{% endif %}">Completed</a>
+  <a href="{% url 'todos:list' %}?filter=high" class="filter-btn {% if request.GET.filter == 'high' %}active{% endif %}">High Priority</a>
 </div>
 
 <!-- Todo List -->
@@ -212,7 +212,7 @@
         </div>
         <div class="todo-actions">
           <!-- Toggle -->
-          <form method="POST" action="{% url 'web_todo_toggle' todo.pk %}">
+          <form method="POST" action="{% url 'todos:toggle' todo.pk %}">
             {% csrf_token %}
             {% if todo.completed %}
               <button type="submit" class="btn btn-ghost btn-sm">Undo</button>
@@ -227,7 +227,7 @@
             Edit
           </button>
           <!-- Delete -->
-          <form method="POST" action="{% url 'web_todo_delete' todo.pk %}">
+          <form method="POST" action="{% url 'todos:delete' todo.pk %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this todo?')">Del</button>
           </form>
@@ -236,7 +236,7 @@
 
       <!-- Edit form (hidden by default) -->
       <div class="edit-form" id="edit-{{ todo.pk }}">
-        <form method="POST" action="{% url 'web_todo_edit' todo.pk %}">
+        <form method="POST" action="{% url 'todos:edit' todo.pk %}">
           {% csrf_token %}
           <div class="edit-grid">
             <div class="field full">

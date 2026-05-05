@@ -12,6 +12,7 @@ services:
       PGTZ: UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
 
@@ -19,7 +20,8 @@ services:
     build: .
     container_name: todo_web
     command: >
-      sh -c "python manage.py makemigrations accounts &&
+      sh -c "sleep 20 &&
+             python manage.py makemigrations accounts &&
              python manage.py makemigrations todos &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
@@ -31,6 +33,7 @@ services:
       - .env
     depends_on:
       - db
+  
 
   pgadmin:
     image: dpage/pgadmin4

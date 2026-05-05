@@ -77,10 +77,10 @@
     <div class="nav-right">
       {% if jwt_user %}
   <span>👋 {{ jwt_user.username }}</span>
-  <a href="{% url 'web_logout' %}">Logout</a>
+  <a href="{% url 'accounts:logout' %}">Logout</a>
 {% else %}
-  <a href="{% url 'web_login' %}">Login</a>
-  <a href="{% url 'web_register' %}">Register</a>
+  <a href="{% url 'accounts:login' %}">Login</a>
+  <a href="{% url 'accounts:register' %}">Register</a>
 {% endif %}
     </div>
   </nav>
