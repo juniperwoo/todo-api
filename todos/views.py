@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from accounts.views import jwt_required
 from .models import Todo
+from .tasks import send_todo_reminder
 
 
 
@@ -20,20 +21,27 @@ def web_todos(request):
         'jwt_user': request.jwt_user,
     })
 
-
 @jwt_required
 def web_todo_create(request):
     if request.method == 'POST':
         title       = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
         priority    = request.POST.get('priority', 'medium')
-        if title:
-            Todo.objects.create(user=request.jwt_user, title=title, description=description, priority=priority)
+        if title:                                          
+            todo = Todo.objects.create(
+                user=request.jwt_user,
+                title=title,
+                description=description,
+                priority=priority
+            )
+            send_todo_reminder.apply_async(                
+                args=[todo.id],
+                countdown=60 
+            )
             messages.success(request, 'Todo added!')
         else:
             messages.error(request, 'Title is required.')
     return redirect('todos:list')
-
 
 @jwt_required
 def web_todo_toggle(request, pk):

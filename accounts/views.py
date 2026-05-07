@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings as django_settings
 from .models import User
+from .tasks import send_welcome_email
 
 # Helpers
 
@@ -74,7 +75,7 @@ def web_login(request):
 
 def web_register(request):
     if get_user_from_cookie(request):
-        return redirect('todos:list')
+        return redirect('todos:list') 
     if request.method == 'POST':
         username  = request.POST.get('username')
         email     = request.POST.get('email', '')
@@ -98,7 +99,9 @@ def web_register(request):
         elif User.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered.')
         else:
-            user     = User.objects.create_user(username=username, email=email, password=password)
+            user     = User.objects.create_user(username=username, email=email, password=password) #if user_object_create used pw doesnt get hashed
+            #send welcome email in background using celery
+            send_welcome_email.delay(user.username, user.email)
             refresh  = RefreshToken.for_user(user)
             response = redirect('todos:list')
             set_jwt_cookies(response, refresh.access_token, refresh)
@@ -111,3 +114,4 @@ def web_logout(request):
     response.delete_cookie(django_settings.JWT_ACCESS_COOKIE)
     response.delete_cookie(django_settings.JWT_REFRESH_COOKIE)
     return response
+    

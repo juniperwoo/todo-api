@@ -9,31 +9,42 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      PGTZ: UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7-alpine
+    container_name: todo_redis
+    ports:
+      - "6379:6379"
+
   web:
     build: .
-    container_name: todo_web
-    command: >
-      sh -c "sleep 20 &&
-             python manage.py makemigrations accounts &&
-             python manage.py makemigrations todos &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+    container_name: todo_web #my custom app container
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app
+      - .:/app #mounts the current directory to /app in the container, allowing live code changes without rebuilding
     ports:
       - "8000:8000"
+    env_file:
+      - .env #loads environment variables from the .env file into the container, making them accessible to the Django app
+    depends_on: #ensures that the web service starts only after the db and redis services are up and running, preventing connection issues when the Django app tries to access the database or Redis.
+      - db
+      - redis
+
+  celery:
+    build: .
+    container_name: todo_celery
+    command: celery -A config worker --loglevel=info #starts the celery worker
+    volumes:
+      - .:/app
     env_file:
       - .env
     depends_on:
       - db
-  
+      - redis
 
   pgadmin:
     image: dpage/pgadmin4
