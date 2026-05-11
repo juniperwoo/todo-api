@@ -15,3 +15,5 @@ class UserAdmin(BaseUserAdmin): #extend django's default user admin
     ordering        = ('-date_joined',)
     readonly_fields = ('created_at', 'updated_at')
     inlines         = [TodoInline] #shows their todo under each user
+
+

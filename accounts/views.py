@@ -6,6 +6,11 @@ from django.contrib import messages
 from django.conf import settings as django_settings
 from .models import User
 from .tasks import send_welcome_email
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from django.db import connection
+from django.utils import timezone
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+
 
 # Helpers
 
@@ -28,20 +33,31 @@ def set_jwt_cookies(response, access_token, refresh_token): #stores 2 tokens in 
     )
     return response
 
-
-def get_user_from_cookie(request): #extracts access token from cookie, decodes it to get user id, and retrieves user from database. 
+def get_user_from_cookie(request):
     from rest_framework_simplejwt.tokens import AccessToken
-    from accounts.models import User
     token = request.COOKIES.get(django_settings.JWT_ACCESS_COOKIE)
     if not token:
         return None
-    try: 
+    try:
         decoded = AccessToken(token)
         user_id = decoded['user_id']
-        return User.objects.get(id=user_id) 
-    except Exception:
-        return None 
+        jti     = decoded.get('jti')
 
+        if jti:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT is_revoked
+                    FROM token_blacklist_outstandingtoken
+                    WHERE jti = %s
+                """, [jti])
+                row = cursor.fetchone()
+                if row and row[0]: #if token exists in db and is marked revoked, deny authentication
+                    return None
+
+        return User.objects.get(id=user_id)
+
+    except Exception:
+        return None
 
 def jwt_required(view_func): 
     def wrapper(request, *args, **kwargs):
@@ -110,8 +126,23 @@ def web_register(request):
 
 
 def web_logout(request):
-    response = redirect('web_login')
+    response      = redirect('web_login')
+    refresh_token = request.COOKIES.get(django_settings.JWT_REFRESH_COOKIE) #browser cookies bata refresh token fetched
+
+    if refresh_token: #only continue if cookie actually contain token,
+        try:
+            # Update is_revoked and revoked_at in outstandingtoken table
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE token_blacklist_outstandingtoken
+                    SET is_revoked = TRUE,
+                        revoked_at = %s
+                    WHERE token = %s
+                """, [timezone.now(), refresh_token])
+
+        except Exception:
+            pass
+
     response.delete_cookie(django_settings.JWT_ACCESS_COOKIE)
     response.delete_cookie(django_settings.JWT_REFRESH_COOKIE)
     return response
-    

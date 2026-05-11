@@ -36,7 +36,7 @@ def web_todo_create(request):
             )
             send_todo_reminder.apply_async(                
                 args=[todo.id],
-                countdown=60 
+                countdown=1800
             )
             messages.success(request, 'Todo added!')
         else:

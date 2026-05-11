@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+from celery.schedules import crontab
 
 load_dotenv()
 
@@ -70,7 +71,9 @@ DATABASES = {
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
 }
 
@@ -109,6 +112,7 @@ CELERY_ACCEPT_CONTENT = ['json'] #only accept tasks that are json serialized
 CELERY_TASK_SERIALIZER = 'json' 
 CELERY_RESULT_SERIALIZER = 'json' 
 
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' #yses smtp to send mail
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -116,3 +120,10 @@ EMAIL_USE_TLS = True #enables encrypted email transfer
 EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER') 
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL  = os.getenv('EMAIL_HOST_USER') 
+
+CELERY_BEAT_SCHEDULE = {
+    'delete-revoked-tokens-every-minute': {
+        'task': 'accounts.tasks.delete_revoked_tokens',
+        'schedule': crontab(hour=2, minute=0), #runs at 2am daily
+    },
+}
